@@ -12,9 +12,16 @@ import joblib
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from pydantic import BaseModel, Field
-from database.database import get_db_connection
+from database.database import (
+    get_db_connection,
+    save_prediction,
+    get_prediction_history,
+    get_audit_summary,
+    save_recommendation,
+    get_patient_recommendations
+)
 
 
 # ------------------------------------------------------------------------------
@@ -27,6 +34,26 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
+)
+
+# Configure CORS for local development and production environments
+origins = [
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "https://hospital-readmission-pred.onrender.com",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # File paths
@@ -133,11 +160,38 @@ class ReadmissionPrediction(BaseModel):
     threshold: float = Field(..., description="Decision threshold tuned during model validation")
 
 
+class PatientRecommendationRequest(BaseModel):
+    """
+    Payload for doctor follow-up recommendations.
+    - patient_id: Exact Patient ID evaluated
+    - primary_recommendation: Selected primary clinical recommendation (required)
+    - additional_recommendation: Optional doctor-written instruction
+    """
+    patient_id: int = Field(
+        ...,
+        gt=0,
+        description="Patient ID corresponding to patient_nbr",
+        examples=[86047875]
+    )
+    primary_recommendation: str = Field(
+        ...,
+        min_length=3,
+        description="Required primary clinical recommendation",
+        examples=["Schedule physician follow-up within 7 days."]
+    )
+    additional_recommendation: Optional[str] = Field(
+        None,
+        description="Optional custom doctor instructions for the patient",
+        examples=["Patient advised to maintain strict fasting blood glucose log."]
+    )
+
+
 class PatientPredictionResponse(BaseModel):
-    """Exact expected JSON response structure."""
+    """Exact expected JSON response structure with complete clinical data for doctor view."""
     patient_id: int
     patient_information: PatientInformation
     readmission_prediction: ReadmissionPrediction
+    clinical_data: Optional[dict] = None
 
 
 # ------------------------------------------------------------------------------
@@ -156,16 +210,53 @@ def welcome_message():
     }
 
 
+def get_model_metadata():
+    """Extracts verified model details directly from the loaded model artifact."""
+    global model_pipeline, optimal_threshold, expected_features
+    model_name = "Trained ML Pipeline"
+    classifier_name = "Unknown"
+    
+    if model_pipeline is not None:
+        if hasattr(model_pipeline, "named_steps") and "classifier" in model_pipeline.named_steps:
+            clf = model_pipeline.named_steps["classifier"]
+            classifier_name = clf.__class__.__name__
+            if classifier_name == "RandomForestClassifier":
+                model_name = "Random Forest Classifier (Ensemble Pipeline)"
+            elif "LGBM" in classifier_name or "LightGBM" in classifier_name:
+                model_name = "LightGBM Classifier Pipeline"
+            elif classifier_name == "DecisionTreeClassifier":
+                model_name = "Decision Tree Classifier"
+            elif classifier_name == "LogisticRegression":
+                model_name = "Logistic Regression Pipeline"
+            else:
+                model_name = f"{classifier_name} Pipeline"
+        elif hasattr(model_pipeline, "__class__"):
+            classifier_name = model_pipeline.__class__.__name__
+            model_name = f"{classifier_name} Pipeline"
+
+    return {
+        "model_name": model_name,
+        "classifier_class": classifier_name,
+        "decision_threshold": optimal_threshold if optimal_threshold is not None else 0.46,
+        "features_count": len(expected_features) if expected_features else 44,
+        "file": MODEL_FILE_PATH
+    }
+
+
 # GET /health : Health Check Endpoint
 @app.get("/health", tags=["General"])
 def health_check():
     """Health check endpoint confirming that the service and model are active."""
+    meta = get_model_metadata()
     return {
         "status": "running",
         "model_loaded": model_pipeline is not None,
         "dataset_loaded": patient_dataset is not None,
-        "optimal_threshold": optimal_threshold,
-        "total_features": len(expected_features) if expected_features else 0
+        "optimal_threshold": meta["decision_threshold"],
+        "total_features": meta["features_count"],
+        "model_name": meta["model_name"],
+        "classifier_class": meta["classifier_class"],
+        "database": "sqlite"
     }
 
 
@@ -283,53 +374,40 @@ def predict_readmission(request: PatientPredictionRequest):
     # Step 9: Compare probability against the saved threshold to determine risk
     # Probability >= saved threshold -> High Risk; otherwise -> Low Risk
     risk_assessment = "High" if readmission_probability >= optimal_threshold else "Low"
-    # Step 9.1: Save prediction history in MySQL
+    risk_percentage = round(readmission_probability * 100, 2)
 
-    connection = None
-    cursor = None
-
+    # Step 9.1: Save prediction audit record to SQLite database
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        risk_percentage = round(readmission_probability * 100, 2)
-
-        insert_query = """
-            INSERT INTO prediction_history
-            (patient_id, risk_percentage, risk_status)
-            VALUES (%s, %s, %s)
-        """
-
-        cursor.execute(
-            insert_query,
-            (int(patient_id), risk_percentage, risk_assessment)
+        record_id = save_prediction(
+            patient_id=int(patient_id),
+            risk_percentage=risk_percentage,
+            risk_status=risk_assessment
         )
-
-        connection.commit()
-
-        print(f"Prediction saved for Patient ID: {patient_id}")
-
-    except Exception as db_error:
-        if connection is not None and connection.is_connected():
-            connection.rollback()
-
-        print(f"Database saving failed: {db_error}")
-
-    finally:
-        if cursor is not None:
-            cursor.close()
-
-        if connection is not None and connection.is_connected():
-            connection.close()
+        if record_id:
+            print(f"Prediction logged to SQLite audit trail [ID #{record_id}] for Patient #{patient_id}")
+    except Exception as db_err:
+        print(f"SQLite audit trail warning: {db_err}")
 
     # Step 10: Format and return expected JSON response
-    # Strictly returns: patient_id, patient_information, risk, readmission_probability, threshold
-    # IMPORTANT: predicted_class and numeric class labels are never returned
+    # Strictly preserves: patient_id, patient_information, risk, readmission_probability, threshold
+    # Also provides complete clinical_data (all 50 dataset fields) for doctor inspection
     race_val = selected_encounter["race"]
     if pd.isna(race_val) or str(race_val).strip() in ["?", ""]:
         race_str = "Unknown"
     else:
         race_str = str(race_val)
+
+    # Convert all available dataset fields from the patient's record to clean JSON-serializable dict
+    clinical_data = {}
+    for col, val in selected_encounter.items():
+        if pd.isna(val) or str(val).strip() in ["?", ""]:
+            clinical_data[col] = None
+        elif isinstance(val, (np.integer, int)):
+            clinical_data[col] = int(val)
+        elif isinstance(val, (np.floating, float)):
+            clinical_data[col] = float(val)
+        else:
+            clinical_data[col] = str(val)
 
     response_payload = {
         "patient_id": int(patient_id),
@@ -344,10 +422,125 @@ def predict_readmission(request: PatientPredictionRequest):
             "risk": risk_assessment,
             "readmission_probability": round(readmission_probability, 2),
             "threshold": round(optimal_threshold, 2)
-        }
+        },
+        "clinical_data": clinical_data
     }
 
     return response_payload
+
+
+# GET /audit-trail : SQLite Prediction Audit Trail
+@app.get(
+    "/audit-trail",
+    tags=["Audit Trail"],
+    summary="Retrieve SQL database audit trail records and summary metrics"
+)
+def get_audit_trail(
+    patient_id: Optional[int] = None,
+    risk_status: Optional[str] = None,
+    sort_by: str = "newest",
+    limit: int = 500
+):
+    """
+    Retrieves real prediction history records from SQLite database (database/hospital_readmission.db).
+    Supports optional patient_id search, risk_status filter, and sort_by parameter.
+    All timestamps are provided in both raw UTC and formatted Indian Standard Time (IST).
+    """
+    try:
+        records = get_prediction_history(
+            patient_id=patient_id,
+            risk_status=risk_status,
+            sort_by=sort_by,
+            limit=limit
+        )
+        summary = get_audit_summary()
+        meta = get_model_metadata()
+        return {
+            "status": "success",
+            "database": "SQLite 3",
+            "database_file": "hospital_readmission.db",
+            "table": "prediction_history",
+            "model_info": meta,
+            "timezone": "IST (UTC+05:30)",
+            "summary": summary,
+            "total_returned": len(records),
+            "records": records
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to query SQLite audit trail: {str(e)}"
+        )
+
+
+# POST /recommendations : Save Doctor Follow-up Recommendation
+@app.post(
+    "/recommendations",
+    tags=["Doctor Recommendations"],
+    summary="Save a doctor's clinical follow-up recommendation linked to a Patient ID"
+)
+def create_patient_recommendation(payload: PatientRecommendationRequest):
+    """
+    Saves a doctor's follow-up recommendation for a specific patient in SQLite table 'patient_recommendations'.
+    Validates that:
+    - patient_id is positive.
+    - primary_recommendation is provided.
+    - date and time are recorded accurately.
+    Returns the saved recommendation record with IST timestamp.
+    """
+    try:
+        primary_rec = payload.primary_recommendation.strip()
+        if not primary_rec:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Primary recommendation is required and cannot be empty."
+            )
+
+        saved = save_recommendation(
+            patient_id=payload.patient_id,
+            primary_recommendation=primary_rec,
+            additional_recommendation=payload.additional_recommendation,
+            status="Sent"
+        )
+
+        return {
+            "status": "success",
+            "message": f"Recommendation sent successfully to Patient #{payload.patient_id}",
+            "recommendation": saved
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save recommendation in database: {str(e)}"
+        )
+
+
+# GET /recommendations/{patient_id} : Retrieve Recommendations for Patient
+@app.get(
+    "/recommendations/{patient_id}",
+    tags=["Doctor Recommendations"],
+    summary="Retrieve all saved follow-up recommendations for a specific patient"
+)
+def get_recommendations_for_patient(patient_id: int):
+    """
+    Retrieves the clinical follow-up recommendations associated with a given Patient ID.
+    Timestamps are formatted in Indian Standard Time (IST).
+    """
+    try:
+        recs = get_patient_recommendations(patient_id=patient_id, limit=50)
+        return {
+            "status": "success",
+            "patient_id": patient_id,
+            "total": len(recs),
+            "recommendations": recs
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve recommendations for Patient #{patient_id}: {str(e)}"
+        )
 
 
 # ------------------------------------------------------------------------------

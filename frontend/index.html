@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediPredict — Hospital Readmission Risk AI</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36' fill='none'><rect width='36' height='36' rx='9' fill='%230f2744'/><path d='M18 8v5m0 10v5M8 18h5m10 0h5' stroke='%230d9488' stroke-width='2.5' stroke-linecap='round'/><path d='M11 18h3.5l2-4 3 8 2-4h3.5' stroke='%232dd4bf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       CLEAN APPLICATION HEADER (Logo, Brand & Live Status)
+       ======================================================================== -->
+  <header class="app-header">
+    <div class="container header-inner">
+      <div class="brand-wrapper">
+        <div class="brand-logo-icon">
+          <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="10" fill="#0f2744"/>
+            <path d="M20 9v6m0 10v6M9 20h6m10 0h6" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M12 20h3.5l2.2-4.5 3 9 2.3-4.5h4" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">
+            <span class="brand-medi">Medi</span><span class="brand-predict">Predict</span>
+          </div>
+          <span class="brand-tagline">Clinical Readmission AI</span>
+        </div>
+      </div>
+
+      <!-- Strict Backend Connection Status Indicator -->
+      <div id="api-status-pill" class="api-status-pill">
+        <span id="api-status-dot" class="status-dot checking"></span>
+        <span id="api-status-text">Backend: Checking...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       HORIZONTAL FOUR-TAB NAVIGATION BAR (Clean, Modern, Light Theme)
+       ======================================================================== -->
+  <nav class="portal-nav-bar">
+    <div class="container nav-tabs-container">
+      <button class="nav-tab-btn active" data-tab="overview" onclick="MediApp.switchTab('overview')">
+        <span class="nav-tab-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </span>
+        <span class="nav-tab-label">Problem Statement &amp; Overview</span>
+      </button>
+
+      <button class="nav-tab-btn" data-tab="doctor" onclick="MediApp.switchTab('doctor')">
+        <span class="nav-tab-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/>
+            <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/>
+            <circle cx="20" cy="10" r="2"/>
+          </svg>
+        </span>
+        <span class="nav-tab-label">Doctor Portal</span>
+      </button>
+
+      <button class="nav-tab-btn" data-tab="model" onclick="MediApp.switchTab('model')">
+        <span class="nav-tab-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"/>
+            <line x1="4" y1="10" x2="4" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12" y2="3"/>
+            <line x1="20" y1="21" x2="20" y2="16"/>
+            <line x1="20" y1="12" x2="20" y2="3"/>
+            <line x1="1" y1="14" x2="7" y2="14"/>
+            <line x1="9" y1="8" x2="15" y2="8"/>
+            <line x1="17" y1="16" x2="23" y2="16"/>
+          </svg>
+        </span>
+        <span class="nav-tab-label">AI Model &amp; Prediction Insights</span>
+      </button>
+
+      <button class="nav-tab-btn" data-tab="audit" onclick="MediApp.switchTab('audit')">
+        <span class="nav-tab-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+        </span>
+        <span class="nav-tab-label">SQL Database Audit Trail</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========================================================================
+       MAIN TABBED VIEWS CONTAINER
+       ======================================================================== -->
+  <main class="main-content">
+    <div class="container">
+
+      <!-- ====================================================================
+           TAB 1: PROBLEM STATEMENT & OVERVIEW (Streamlined & Clean)
+           ==================================================================== -->
+      <section id="tab-overview" class="tab-view active">
+        <!-- Overview Hero Card -->
+        <div class="portal-hero-banner">
+          <div class="hero-top-eyebrow flex items-center justify-between">
+            <span class="eyebrow-text">CLINICAL DECISION SUPPORT &bull; 30-DAY READMISSION RISK</span>
+            <span class="hero-source-badge">130 US Hospitals &bull; 101,766 Inpatient Records (1999–2008)</span>
+          </div>
+
+          <h1 class="hero-title">Hospital Readmission Risk Stratification System</h1>
+          <p class="hero-description">
+            MediPredict applies machine learning to historical diabetic inpatient hospital records to evaluate the probability of unscheduled readmission within 30 days of discharge. Attending physicians search by Patient ID to access encounter telemetry, evaluate calibrated model predictions, and guide targeted post-discharge care.
+          </p>
+
+          <!-- 4 Core Scope Cards -->
+          <div class="scope-cards-grid">
+            <div class="scope-card">
+              <div class="scope-card-icon text-navy">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                </svg>
+              </div>
+              <span class="scope-card-label">Dataset Scope</span>
+              <strong class="scope-card-value">101,766 Inpatient Records</strong>
+              <span class="scope-card-sub">diabetic_data.csv (50 Attributes)</span>
+            </div>
+
+            <div class="scope-card">
+              <div class="scope-card-icon text-teal">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+              </div>
+              <span class="scope-card-label">Production Model</span>
+              <strong class="scope-card-value text-teal">Random Forest Ensemble</strong>
+              <span class="scope-card-sub">100 Trees &bull; hospital_readmission_model.pkl</span>
+            </div>
+
+            <div class="scope-card">
+              <div class="scope-card-icon text-primary">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <span class="scope-card-label">Decision Threshold</span>
+              <strong class="scope-card-value text-primary">0.46 (79.03% Sensitivity)</strong>
+              <span class="scope-card-sub">F2-Optimized (Recall Priority)</span>
+            </div>
+
+            <div class="scope-card">
+              <div class="scope-card-icon text-navy">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+              </div>
+              <span class="scope-card-label">Audit Engine</span>
+              <strong class="scope-card-value">SQLite 3 Relational Storage</strong>
+              <span class="scope-card-sub">hospital_readmission.db (IST Timestamps)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Problem Challenge & Proposed Solution (2 Clear Focused Cards) -->
+        <div class="section-grid-2 mb-8">
+          <div class="info-card">
+            <div class="info-card-header">
+              <div class="info-card-icon-box bg-danger-light text-danger">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <h3 class="info-card-title">The Clinical Challenge</h3>
+            </div>
+            <p>
+              Inpatient discharge does not always signify stable clinical recovery. Unscheduled readmissions within 30 days present significant clinical and operational burdens:
+            </p>
+            <ul class="bullet-list mt-3">
+              <li><strong>Healthcare Penalties:</strong> Substantial hospital penalties under readmission reduction initiatives.</li>
+              <li><strong>Capacity Strain:</strong> Acute bed occupancy pressure and heightened clinical workload.</li>
+              <li><strong>Patient Vulnerability:</strong> Physical and psychological setbacks from avoidable reinstitutionalization.</li>
+              <li><strong>Detection Gaps:</strong> Difficulty in identifying multi-morbid diabetic patients without automated telemetry.</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-header">
+              <div class="info-card-icon-box bg-teal-light text-teal">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <h3 class="info-card-title">The MediPredict Solution</h3>
+            </div>
+            <p>
+              MediPredict bridges electronic health telemetry with an automated machine learning inference pipeline:
+            </p>
+            <ul class="bullet-list mt-3">
+              <li><strong>Instant Lookup:</strong> Doctors query by Patient ID; all clinical encounter telemetry loads instantly.</li>
+              <li><strong>44-Feature Pipeline:</strong> Automatic median imputation, categorical encoding, and feature scaling.</li>
+              <li><strong>High Sensitivity:</strong> Tuned 0.46 decision threshold achieves 79.03% recall to catch high-risk cases.</li>
+              <li><strong>Actionable Guidance:</strong> Provides concrete recommendations including 7-day follow-up and medication checks.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 4-Step Decision Support Pipeline Flowchart -->
+        <div class="content-block mb-8">
+          <div class="block-header">
+            <div>
+              <h2 class="block-title">4-Step Decision Support Pipeline</h2>
+              <p class="block-subtitle">How inpatient electronic health telemetry is converted into actionable physician guidance.</p>
+            </div>
+            <span class="badge badge-teal">End-to-End Workflow</span>
+          </div>
+
+          <div class="workflow-steps-grid">
+            <div class="workflow-step-card">
+              <div class="workflow-step-top">
+                <span class="workflow-step-number">01</span>
+                <span class="workflow-step-tag">Lookup</span>
+              </div>
+              <h4>Patient ID Query</h4>
+              <p>Clinician enters Patient ID. System queries <code>diabetic_data.csv</code> and retrieves the matching inpatient record.</p>
+            </div>
+
+            <div class="workflow-step-card">
+              <div class="workflow-step-top">
+                <span class="workflow-step-number">02</span>
+                <span class="workflow-step-tag">Pipeline</span>
+              </div>
+              <h4>Feature Vectorization</h4>
+              <p>Pipeline isolates 44 model features, replaces '?' with NaN, imputes missing values, and one-hot encodes categorical dimensions.</p>
+            </div>
+
+            <div class="workflow-step-card">
+              <div class="workflow-step-top">
+                <span class="workflow-step-number">03</span>
+                <span class="workflow-step-tag">Inference</span>
+              </div>
+              <h4>Ensemble Evaluation</h4>
+              <p>Trained Random Forest ensemble evaluates tree voting to calculate class-1 readmission probability via <code>predict_proba()</code>.</p>
+            </div>
+
+            <div class="workflow-step-card">
+              <div class="workflow-step-top">
+                <span class="workflow-step-number">04</span>
+                <span class="workflow-step-tag">Action</span>
+              </div>
+              <h4>Threshold &amp; Advisory</h4>
+              <p>Probability is compared against 0.46 threshold; outputs High/Low risk, clinical recommendations, and logs to SQLite.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dataset Overview & Target Distribution -->
+        <div class="content-block">
+          <div class="block-header">
+            <div>
+              <h2 class="block-title">Dataset Overview &amp; Preparation</h2>
+              <p class="block-subtitle">Verified statistics and attribute composition of <code>diabetic_data.csv</code>.</p>
+            </div>
+            <span class="badge badge-neutral">101,766 Inpatient Encounters</span>
+          </div>
+
+          <div class="dataset-stats-grid mb-6">
+            <div class="stat-box">
+              <span class="stat-number">101,766</span>
+              <span class="stat-desc">Total Hospital Encounters</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number">50</span>
+              <span class="stat-desc">Original Dataset Attributes</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number text-teal">44</span>
+              <span class="stat-desc">Clinical Features Used by Model</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number">6</span>
+              <span class="stat-desc">Excluded Features (Leakage/Zero Var)</span>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Target Class (readmitted)</th>
+                  <th>Clinical Definition</th>
+                  <th>Encounter Count</th>
+                  <th>Dataset Proportion</th>
+                  <th>Binary Model Mapping</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-row-highlight">
+                  <td><strong>&lt;30</strong></td>
+                  <td>Readmitted to hospital in less than 30 days of discharge</td>
+                  <td><strong>11,357</strong></td>
+                  <td>11.16%</td>
+                  <td><span class="badge badge-high-subtle">Class 1 (Positive / Target)</span></td>
+                </tr>
+                <tr>
+                  <td><strong>&gt;30</strong></td>
+                  <td>Readmitted to hospital after 30 days of discharge</td>
+                  <td>35,545</td>
+                  <td>34.93%</td>
+                  <td><span class="badge badge-low-subtle">Class 0 (Negative)</span></td>
+                </tr>
+                <tr>
+                  <td><strong>NO</strong></td>
+                  <td>No readmission recorded</td>
+                  <td>54,864</td>
+                  <td>53.91%</td>
+                  <td><span class="badge badge-low-subtle">Class 0 (Negative)</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="dataset-notes-box mt-4">
+            <strong>Data Preparation &amp; Feature Distinctions:</strong>
+            <ul class="bullet-list mt-2 text-sm">
+              <li><strong>Original Columns (50):</strong> Hospital encounter records including demographics, encounter IDs, admission sources, discharge dispositions, ICD-9 codes, glucose/HbA1c tests, and 23 diabetic medication statuses.</li>
+              <li><strong>Features Used by Model (44):</strong> All clinical and encounter variables. Categorical variables are one-hot encoded; numerical features are median-imputed and scaled.</li>
+              <li><strong>Excluded Features (6):</strong> <code>patient_nbr</code> and <code>encounter_id</code> (patient/visit identifiers to prevent leakage); <code>examide</code>, <code>citoglipton</code>, and <code>glimepiride-pioglitazone</code> (zero variance / constant values in dataset); and <code>readmitted</code> (ground truth target).</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ====================================================================
+           TAB 2: DOCTOR PORTAL
+           ==================================================================== -->
+      <section id="tab-doctor" class="tab-view hidden">
+        <!-- Section Title & Subheader -->
+        <div class="view-header-strip mb-6">
+          <div>
+            <h1 class="view-title">Doctor Portal &bull; Clinical Patient Directory</h1>
+            <p class="view-subtitle">Retrieve patient records by Patient ID, inspect 50 dataset attributes, and evaluate 30-day readmission risk.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-teal">Live Inference Engine</span>
+          </div>
+        </div>
+
+        <!-- Prominent Patient Search Box -->
+        <div class="patient-search-card mb-6">
+          <div class="search-card-header mb-3">
+            <h2 class="search-card-title">Patient ID Search &amp; Risk Evaluation</h2>
+            <p class="search-card-desc">Enter a Patient ID (matches <code>patient_nbr</code> in dataset) to retrieve clinical encounter records and trigger the trained ML readmission pipeline.</p>
+          </div>
+
+          <form id="doctor-search-form" class="search-input-wrapper">
+            <div class="search-input-inner">
+              <span class="search-icon-box">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <input type="number" id="search-patient-id" class="form-control search-input-field" placeholder="Enter Patient ID (e.g. 8222157)" required min="1">
+            </div>
+            <button type="submit" class="btn btn-teal btn-search" id="search-submit-btn">
+              Evaluate Risk &rarr;
+            </button>
+          </form>
+
+          <!-- 1-Click Quick Sample Patient Chips -->
+          <div class="quick-samples-wrapper mt-4">
+            <span class="quick-samples-label">Quick Test Sample IDs:</span>
+            <div class="quick-samples-chips">
+              <button type="button" class="sample-chip" onclick="MediApp.loadPatient(8222157)">
+                <span class="chip-id">#8222157</span>
+                <span class="chip-meta">Female &bull; Stay 1d &bull; Age [0-10)</span>
+              </button>
+              <button type="button" class="sample-chip" onclick="MediApp.loadPatient(85504905)">
+                <span class="chip-id">#85504905</span>
+                <span class="chip-meta">Female &bull; Stay 7d &bull; Age [40-50)</span>
+              </button>
+              <button type="button" class="sample-chip" onclick="MediApp.loadPatient(55629189)">
+                <span class="chip-id">#55629189</span>
+                <span class="chip-meta">Female &bull; Stay 3d &bull; Age [10-20)</span>
+              </button>
+              <button type="button" class="sample-chip" onclick="MediApp.loadPatient(86047875)">
+                <span class="chip-id">#86047875</span>
+                <span class="chip-meta">Female &bull; Stay 2d &bull; Age [20-30)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Spinner Container -->
+        <div id="patient-loading" class="text-center py-12 hidden">
+          <div class="circular-spinner">
+            <svg viewBox="0 0 50 50" width="40" height="40">
+              <circle cx="25" cy="25" r="20" fill="none" stroke="#e2e8f0" stroke-width="4"></circle>
+              <circle cx="25" cy="25" r="20" fill="none" stroke="var(--color-teal)" stroke-width="4" stroke-dasharray="80" stroke-dashoffset="60" stroke-linecap="round"></circle>
+            </svg>
+          </div>
+          <div class="text-sm text-muted mt-3">Retrieving inpatient encounter records and executing ML pipeline...</div>
+        </div>
+
+        <!-- Error Alert Container -->
+        <div id="patient-error" class="alert alert-danger hidden mb-6"></div>
+
+        <!-- Complete Loaded Patient File Container -->
+        <div id="patient-content" class="hidden">
+          <!-- Dynamic Prediction Result Card (Rendered via MediApp.renderPredictionResult) -->
+          <div id="patient-prediction-card"></div>
+
+          <!-- Structured Patient Details (Organized into Demographics, Admission, Clinical Cards) -->
+          <div class="section-grid-3 mb-6">
+            <!-- Card 1: Patient Information -->
+            <div class="card patient-dossier-card">
+              <div class="card-header">
+                <div class="flex items-center gap-2">
+                  <span class="dossier-card-icon text-primary">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </span>
+                  <h3 class="card-title">Patient Profile</h3>
+                </div>
+                <span class="badge badge-neutral">Demographics</span>
+              </div>
+              <div class="card-body">
+                <div class="info-stat-row">
+                  <span class="stat-label">Patient ID:</span>
+                  <span class="stat-value font-bold" id="doc-patient-id">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Encounter ID:</span>
+                  <span class="stat-value" id="doc-encounter-id">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Gender:</span>
+                  <span class="stat-value" id="doc-gender">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Age Bracket:</span>
+                  <span class="stat-value" id="doc-age">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Race / Ethnicity:</span>
+                  <span class="stat-value" id="doc-race">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Weight Status:</span>
+                  <span class="stat-value" id="doc-weight">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Admission Information -->
+            <div class="card patient-dossier-card">
+              <div class="card-header">
+                <div class="flex items-center gap-2">
+                  <span class="dossier-card-icon text-teal">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </span>
+                  <h3 class="card-title">Hospital Stay</h3>
+                </div>
+                <span class="badge badge-neutral">Encounter</span>
+              </div>
+              <div class="card-body">
+                <div class="info-stat-row">
+                  <span class="stat-label">Admission Type ID:</span>
+                  <span class="stat-value" id="doc-admission-type">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Admission Source ID:</span>
+                  <span class="stat-value" id="doc-admission-source">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Discharge Disposition:</span>
+                  <span class="stat-value" id="doc-discharge-disp">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Time in Hospital:</span>
+                  <span class="stat-value font-bold" id="doc-time-hospital">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Payer Code:</span>
+                  <span class="stat-value" id="doc-payer-code">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Medical Specialty:</span>
+                  <span class="stat-value" id="doc-medical-specialty">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: Medical Information -->
+            <div class="card patient-dossier-card">
+              <div class="card-header">
+                <div class="flex items-center gap-2">
+                  <span class="dossier-card-icon text-primary">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                  </span>
+                  <h3 class="card-title">Clinical Telemetry</h3>
+                </div>
+                <span class="badge badge-neutral">Indicators</span>
+              </div>
+              <div class="card-body">
+                <div class="info-stat-row">
+                  <span class="stat-label">Primary Diagnosis (ICD-9):</span>
+                  <span class="stat-value font-bold" id="doc-diag-1">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Secondary Diagnosis:</span>
+                  <span class="stat-value" id="doc-diag-2">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Total Diagnoses:</span>
+                  <span class="stat-value" id="doc-num-diagnoses">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Lab Procedures:</span>
+                  <span class="stat-value" id="doc-num-labs">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Non-Lab Procedures:</span>
+                  <span class="stat-value" id="doc-num-procedures">-</span>
+                </div>
+                <div class="info-stat-row">
+                  <span class="stat-label">Distinct Medications:</span>
+                  <span class="stat-value font-bold" id="doc-num-meds">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 50 Clinical Dataset Fields Section -->
+          <div class="card mb-6">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Comprehensive 50-Field Clinical Dataset Dossier</h3>
+                <p class="text-xs text-muted mt-1">
+                  Examines all available clinical fields from <code>diabetic_data.csv</code> for Patient ID #<span id="fields-patient-id">-</span>.
+                </p>
+              </div>
+              <span id="fields-count-badge" class="badge badge-teal">50 Fields</span>
+            </div>
+            <div class="card-body">
+              <div class="fields-filter-bar">
+                <div class="tabs-nav mb-0">
+                  <button class="tab-btn fields-tab-btn active" data-category="all">All (50)</button>
+                  <button class="tab-btn fields-tab-btn" data-category="demographics">Demographics (6)</button>
+                  <button class="tab-btn fields-tab-btn" data-category="admission">Admission (6)</button>
+                  <button class="tab-btn fields-tab-btn" data-category="utilization">Utilization (6)</button>
+                  <button class="tab-btn fields-tab-btn" data-category="diagnoses">Diagnoses &amp; Labs (6)</button>
+                  <button class="tab-btn fields-tab-btn" data-category="medications">Medications (23)</button>
+                  <button class="tab-btn fields-tab-btn" data-category="treatment">Treatment (3)</button>
+                </div>
+
+                <div class="fields-search-box">
+                  <input type="text" id="fields-search-input" class="form-control" placeholder="Search fields (e.g. insulin, age, diag)...">
+                </div>
+              </div>
+
+              <div id="clinical-fields-grid" class="clinical-fields-grid mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ====================================================================
+           TAB 3: AI MODEL & PREDICTION INSIGHTS
+           ==================================================================== -->
+      <section id="tab-model" class="tab-view hidden">
+        <!-- View Title -->
+        <div class="view-header-strip mb-6">
+          <div>
+            <h1 class="view-title">AI Model Architecture &amp; Clinical Telemetry Simulator</h1>
+            <p class="view-subtitle">Interactive clinical simulator, model benchmark tournament, verified evaluation metrics, and feature importance analysis.</p>
+          </div>
+          <span class="badge badge-teal">Production Model: hospital_readmission_model.pkl</span>
+        </div>
+
+        <!-- 1-Click Demonstration Scenarios -->
+        <div class="content-block mb-8">
+          <div class="block-header">
+            <div>
+              <h3 class="card-title">1-Click Clinical Demonstration Scenarios</h3>
+              <p class="text-xs text-muted mt-1">Select any clinical archetype below to test the trained machine learning pipeline response:</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="MediApp.resetSimulator()">Reset to Default</button>
+          </div>
+
+          <div class="scenarios-grid">
+            <div class="scenario-card scenario-severe" onclick="MediApp.applyScenario('severe')">
+              <div class="scenario-header">
+                <div class="flex items-center gap-2">
+                  <span class="scenario-icon text-danger">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                  </span>
+                  <span class="scenario-title text-danger">High Inpatient Risk Archetype</span>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm">Apply</button>
+              </div>
+              <div class="scenario-sub">Patient #85504905 &bull; Stay 7d &bull; Inpatient Admissions: 3 &bull; Meds: 21</div>
+            </div>
+
+            <div class="scenario-card scenario-moderate" onclick="MediApp.applyScenario('moderate')">
+              <div class="scenario-header">
+                <div class="flex items-center gap-2">
+                  <span class="scenario-icon text-warning">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                  </span>
+                  <span class="scenario-title text-warning">Borderline Risk Archetype</span>
+                </div>
+                <button type="button" class="btn btn-warning btn-sm">Apply</button>
+              </div>
+              <div class="scenario-sub">Patient #55629189 &bull; Stay 3d &bull; Near Decision Threshold (0.46)</div>
+            </div>
+
+            <div class="scenario-card scenario-optimal" onclick="MediApp.applyScenario('optimal')">
+              <div class="scenario-header">
+                <div class="flex items-center gap-2">
+                  <span class="scenario-icon text-teal">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                      <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                  </span>
+                  <span class="scenario-title text-teal">Low Risk Routine Discharge</span>
+                </div>
+                <button type="button" class="btn btn-teal btn-sm">Apply</button>
+              </div>
+              <div class="scenario-sub">Patient #8222157 &bull; Stay 1d &bull; Low Prior Utilization &bull; Meds: 7</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Telemetry & Live Clinical Diagnosis -->
+        <div class="simulator-layout-grid mb-8">
+          <!-- Left: Clinical Telemetry Parameters -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="card-title">Clinical Telemetry Parameters</h3>
+                <p class="text-xs text-muted">Adjust inpatient clinical factors to compute simulated readmission risk</p>
+              </div>
+              <span class="badge badge-teal" id="sim-scenario-badge">Active Case: Standard</span>
+            </div>
+
+            <!-- Slider 1: Length of Hospital Stay -->
+            <div class="slider-group mb-4">
+              <div class="flex items-center justify-between mb-1">
+                <label class="slider-label">Length of Stay (Time in Hospital)</label>
+                <span class="slider-value-pill" id="val-stay">4 Days</span>
+              </div>
+              <input type="range" id="slider-stay" min="1" max="14" value="4" class="range-slider" oninput="MediApp.updateSimulator()">
+              <div class="slider-scale flex justify-between text-xs text-muted">
+                <span>1 Day (Minor stay)</span>
+                <span>Critical Threshold: &gt;5 Days</span>
+                <span>14 Days (Extended stay)</span>
+              </div>
+            </div>
+
+            <!-- Slider 2: Prior Inpatient Admissions -->
+            <div class="slider-group mb-4">
+              <div class="flex items-center justify-between mb-1">
+                <label class="slider-label">Prior Inpatient Admissions (Past 12 Months)</label>
+                <span class="slider-value-pill" id="val-inpatient">1 Admission</span>
+              </div>
+              <input type="range" id="slider-inpatient" min="0" max="8" value="1" class="range-slider range-red" oninput="MediApp.updateSimulator()">
+              <div class="slider-scale flex justify-between text-xs text-muted">
+                <span>0 (No prior stay)</span>
+                <span>High Frequency: &gt;2</span>
+                <span>8+ Admissions</span>
+              </div>
+            </div>
+
+            <!-- Slider 3: Total Distinct Medications -->
+            <div class="slider-group mb-4">
+              <div class="flex items-center justify-between mb-1">
+                <label class="slider-label">Administered Distinct Medications</label>
+                <span class="slider-value-pill" id="val-meds">15 Medications</span>
+              </div>
+              <input type="range" id="slider-meds" min="1" max="60" value="15" class="range-slider range-blue" oninput="MediApp.updateSimulator()">
+              <div class="slider-scale flex justify-between text-xs text-muted">
+                <span>1 (Monotherapy)</span>
+                <span>Polypharmacy: &gt;16</span>
+                <span>60 Medications</span>
+              </div>
+            </div>
+
+            <!-- Slider 4: Total Diagnoses Count -->
+            <div class="slider-group">
+              <div class="flex items-center justify-between mb-1">
+                <label class="slider-label">Total Diagnoses Recorded</label>
+                <span class="slider-value-pill" id="val-diag">6 Diagnoses</span>
+              </div>
+              <input type="range" id="slider-diag" min="1" max="16" value="6" class="range-slider range-teal" oninput="MediApp.updateSimulator()">
+              <div class="slider-scale flex justify-between text-xs text-muted">
+                <span>1 (Isolated)</span>
+                <span>Multi-morbid: &gt;8</span>
+                <span>16 Diagnoses</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Live Clinical Diagnosis Box -->
+          <div class="card p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-bold text-muted uppercase tracking-wider">Live Clinical Risk Diagnosis</span>
+                <span id="sim-status-badge" class="badge badge-low-subtle text-sm font-bold">LOW RISK</span>
+              </div>
+
+              <div class="text-center py-4">
+                <div class="text-xs text-muted uppercase tracking-wider mb-1">30-Day Readmission Risk Score</div>
+                <div class="sim-big-score" id="sim-score-display">34.8<span class="text-sm text-muted"> / 100</span></div>
+                <div class="sim-meter-bar-wrapper mt-3">
+                  <div class="sim-meter-bar" id="sim-meter-bar" style="width: 34.8%;"></div>
+                  <div class="sim-threshold-marker" style="left: 46%;" title="Decision Threshold: 0.46">
+                    <span class="threshold-marker-tag">Threshold: 46%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="alert alert-info mt-4" id="sim-guidance-box">
+                <strong id="sim-priority-text">Priority: Standard (Routine Outpatient Review)</strong>
+                <p class="text-xs mt-1" id="sim-guidance-text">
+                  Patient risk score is below the 0.46 decision threshold. Standard outpatient discharge instructions and primary care follow-up recommended.
+                </p>
+              </div>
+            </div>
+
+            <div class="sim-footer-meta pt-4 border-top">
+              <div class="flex justify-between text-xs text-muted">
+                <span>Model Pipeline:</span>
+                <strong class="text-main">Random Forest (hospital_readmission_model.pkl)</strong>
+              </div>
+              <div class="flex justify-between text-xs text-muted mt-1">
+                <span>Optimization Criterion:</span>
+                <strong class="text-main">F2-Score (0.3630) &bull; 79.03% Recall</strong>
+              </div>
+              <div class="flex justify-between text-xs text-muted mt-1">
+                <span>Decision Threshold:</span>
+                <strong class="text-teal">0.46 (46.0%)</strong>
+              </div>
+              <div class="flex justify-between text-xs text-muted mt-1">
+                <span>Audit Storage:</span>
+                <strong class="text-main">SQLite 3 (hospital_readmission.db)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Machine Learning Model Tournament & Evaluation -->
+        <div class="content-block mb-8">
+          <div class="block-header">
+            <div>
+              <h2 class="block-title">Machine Learning Model Tournament &amp; Evaluation</h2>
+              <p class="block-subtitle">
+                Benchmarking 3 algorithm architectures on 14,304 holdout test encounters using 80/20 train/test split and 3-fold cross-validation.
+              </p>
+            </div>
+            <span class="badge badge-teal">Verified From Notebook</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Model Architecture</th>
+                  <th>Tuned Threshold</th>
+                  <th>Accuracy</th>
+                  <th>Precision</th>
+                  <th>Recall (Sensitivity)</th>
+                  <th>F1 Score</th>
+                  <th>F2 Score (Selection Metric)</th>
+                  <th>ROC-AUC</th>
+                  <th>PR-AUC</th>
+                  <th>Tournament Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="table-row-champion">
+                  <td>
+                    <strong>Random Forest (100 Trees, max_depth=16)</strong>
+                  </td>
+                  <td><strong>0.46</strong></td>
+                  <td>44.51%</td>
+                  <td>11.48%</td>
+                  <td><strong class="text-teal">79.03%</strong></td>
+                  <td>0.2004</td>
+                  <td><strong class="text-teal">0.3630</strong></td>
+                  <td>0.6695</td>
+                  <td>0.1837</td>
+                  <td><span class="badge badge-champion">CHAMPION</span></td>
+                </tr>
+                <tr>
+                  <td>Decision Tree (Tuned GridSearchCV)</td>
+                  <td>0.44</td>
+                  <td>41.20%</td>
+                  <td>10.82%</td>
+                  <td>75.14%</td>
+                  <td>0.1891</td>
+                  <td>0.3421</td>
+                  <td>0.6280</td>
+                  <td>0.1612</td>
+                  <td><span class="badge badge-neutral">Runner-Up</span></td>
+                </tr>
+                <tr>
+                  <td>Logistic Regression (L2 Regularized)</td>
+                  <td>0.42</td>
+                  <td>39.80%</td>
+                  <td>10.15%</td>
+                  <td>72.80%</td>
+                  <td>0.1782</td>
+                  <td>0.3290</td>
+                  <td>0.6150</td>
+                  <td>0.1540</td>
+                  <td><span class="badge badge-neutral">Baseline</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Feature Importance Ranking -->
+        <div class="content-block mb-8">
+          <div class="block-header">
+            <div>
+              <h2 class="block-title">Feature Importance Ranking (Gini Impurity &amp; Tree Gain)</h2>
+              <p class="block-subtitle">Real aggregated feature importances extracted directly from the trained Random Forest classifier.</p>
+            </div>
+            <span class="badge badge-teal">Top Clinical Drivers</span>
+          </div>
+
+          <div class="feature-importance-list">
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>1. Discharge Disposition (<code>discharge_disposition_id</code>)</span>
+                <strong>16.72% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-teal" style="width: 100%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>2. Primary Discharge Diagnosis (<code>diag_1</code> ICD-9)</span>
+                <strong>12.59% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-teal" style="width: 75.3%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>3. Tertiary Additional Diagnosis (<code>diag_3</code> ICD-9)</span>
+                <strong>10.00% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-teal" style="width: 59.8%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>4. Secondary Diagnosis (<code>diag_2</code> ICD-9)</span>
+                <strong>9.73% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-teal" style="width: 58.2%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>5. Prior Inpatient Admissions (<code>number_inpatient</code>)</span>
+                <strong>5.98% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-primary" style="width: 35.8%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>6. Admitting Medical Specialty (<code>medical_specialty</code>)</span>
+                <strong>4.30% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-primary" style="width: 25.7%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>7. Health Insurance / Payer Code (<code>payer_code</code>)</span>
+                <strong>4.03% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-primary" style="width: 24.1%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>8. Hospital Length of Stay (<code>time_in_hospital</code>)</span>
+                <strong>3.67% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-primary" style="width: 21.9%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>9. Patient Age Bracket (<code>age</code>)</span>
+                <strong>3.52% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-slate" style="width: 21.1%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>10. Distinct Administered Medications (<code>num_medications</code>)</span>
+                <strong>3.08% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-slate" style="width: 18.4%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>11. Laboratory Procedures Performed (<code>num_lab_procedures</code>)</span>
+                <strong>2.71% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-slate" style="width: 16.2%;"></div></div>
+            </div>
+
+            <div class="feat-item">
+              <div class="feat-header flex justify-between text-sm mb-1">
+                <span>12. Total Diagnoses Entered (<code>number_diagnoses</code>)</span>
+                <strong>2.48% Importance</strong>
+              </div>
+              <div class="feat-bar-bg"><div class="feat-bar-fill fill-slate" style="width: 14.8%;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Decision Threshold Explanation & Confusion Matrix (Two Columns) -->
+        <div class="section-grid-2 mb-8">
+          <!-- Threshold Deep-Dive Card -->
+          <div class="card p-6">
+            <h3 class="card-title mb-2">Decision Threshold Optimization (0.46 vs 0.50)</h3>
+            <p class="text-sm text-secondary mb-4">
+              Standard binary classifiers default to 0.50. In hospital readmission prevention, a <strong>False Negative</strong>
+              (discharging a patient who will be readmitted without warning) carries far greater risk than a <strong>False Positive</strong> (scheduling an extra follow-up call).
+            </p>
+
+            <div class="threshold-diagram-box p-4 bg-alt rounded mb-4">
+              <div class="flex justify-between text-xs font-bold mb-2">
+                <span>0.00 (Always Negative)</span>
+                <span class="text-teal">Tuned Threshold: 0.46</span>
+                <span class="text-muted">Default: 0.50</span>
+                <span>1.00 (Always Positive)</span>
+              </div>
+              <div class="threshold-line-bar">
+                <div class="threshold-line-neg" style="width: 46%;">Low Risk (Class 0)</div>
+                <div class="threshold-line-pos" style="width: 54%;">High Risk (Class 1)</div>
+              </div>
+            </div>
+
+            <ul class="bullet-list text-sm">
+              <li><strong>Optimization Metric:</strong> Tuned via <code>fbeta_score(beta=2)</code> on 3-fold cross validation.</li>
+              <li><strong>Clinical Sensitivity:</strong> By choosing 0.46, the model achieves <strong>79.03% Recall</strong> (detecting ~8 out of every 10 patients who will return within 30 days).</li>
+              <li><strong>Safety Protocol:</strong> Lower threshold catches high-risk diabetic patients who require post-discharge support.</li>
+            </ul>
+          </div>
+
+          <!-- Confusion Matrix Card -->
+          <div class="card p-6">
+            <h3 class="card-title mb-2">Test Set Confusion Matrix (14,304 Encounters)</h3>
+            <p class="text-sm text-secondary mb-4">
+              Verified confusion matrix from notebook Cell 23 evaluated on 14,304 holdout test records.
+            </p>
+
+            <div class="confusion-matrix-grid mb-4">
+              <div class="cm-cell cm-tn">
+                <span class="cm-label">True Negative (TN)</span>
+                <strong class="cm-val">5,371</strong>
+                <span class="cm-sub">Correctly identified low risk</span>
+              </div>
+              <div class="cm-cell cm-fp">
+                <span class="cm-label">False Positive (FP)</span>
+                <strong class="cm-val">7,674</strong>
+                <span class="cm-sub">Cautious preventive alerts</span>
+              </div>
+              <div class="cm-cell cm-fn">
+                <span class="cm-label">False Negative (FN)</span>
+                <strong class="cm-val text-danger">264</strong>
+                <span class="cm-sub">Missed readmissions (Minimized)</span>
+              </div>
+              <div class="cm-cell cm-tp">
+                <span class="cm-label">True Positive (TP)</span>
+                <strong class="cm-val text-teal">995</strong>
+                <span class="cm-sub">Accurately detected readmissions</span>
+              </div>
+            </div>
+
+            <div class="text-xs text-muted">
+              Note: With 1,259 true readmissions in the test set, the model correctly identified 995 (<strong>79.03% Recall</strong>), missing only 264 encounters.
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Limitations Notice -->
+        <div class="alert alert-warning">
+          <strong>Clinical Machine Learning System Notice:</strong>
+          This model is trained on historical data (1999–2008) from 130 US hospitals. Predictions represent probabilistic statistical estimates of 30-day readmission risk based on clinical encounter data. Predictions must always be synthesized with attending physician examination.
+        </div>
+      </section>
+
+
+      <!-- ====================================================================
+           TAB 4: SQL DATABASE AUDIT TRAIL
+           ==================================================================== -->
+      <section id="tab-audit" class="tab-view hidden">
+        <!-- Dashboard Header & Actions -->
+        <div class="audit-dashboard-header mb-6">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <h1 class="view-title">Clinical Prediction Audit Trail</h1>
+              <span class="badge badge-teal">Relational SQLite 3</span>
+              <span class="badge badge-neutral">Timezone: IST (UTC+05:30)</span>
+            </div>
+            <p class="view-subtitle">Immutable audit trail of patient readmission risk assessments, decision threshold comparisons, and clinical outcomes.</p>
+          </div>
+          <div class="audit-header-actions flex items-center gap-3">
+            <button type="button" class="btn btn-secondary btn-sm" id="audit-refresh-btn" onclick="MediApp.refreshAuditTrail(true)">
+              <span id="refresh-spinner" class="refresh-icon">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+              </span>
+              Refresh Table
+            </button>
+            <button type="button" class="btn btn-teal btn-sm" onclick="MediApp.exportAuditCSV()">
+              <span class="export-icon">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </span>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Clinical Summary Metric Cards -->
+        <div class="audit-metrics-grid mb-6">
+          <div class="audit-metric-card">
+            <div class="metric-top flex justify-between items-center mb-2">
+              <span class="metric-label">Total Predictions Logged</span>
+              <div class="metric-icon-box text-primary">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-number text-primary" id="audit-total-count">0</div>
+            <div class="metric-subtext">Verified SQLite records in <code>prediction_history</code></div>
+          </div>
+
+          <div class="audit-metric-card border-top-danger">
+            <div class="metric-top flex justify-between items-center mb-2">
+              <span class="metric-label">High-Risk Predictions</span>
+              <div class="metric-icon-box text-danger">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-number text-danger" id="audit-high-count">0</div>
+            <div class="metric-subtext">Risk &ge; 46.0% (Actionable 7-day follow-up alerted)</div>
+          </div>
+
+          <div class="audit-metric-card border-top-teal">
+            <div class="metric-top flex justify-between items-center mb-2">
+              <span class="metric-label">Low-Risk Predictions</span>
+              <div class="metric-icon-box text-teal">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="m9 12 2 2 4-4"/>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-number text-teal" id="audit-low-count">0</div>
+            <div class="metric-subtext">Risk &lt; 46.0% (Standard recovery protocol)</div>
+          </div>
+
+          <div class="audit-metric-card">
+            <div class="metric-top flex justify-between items-center mb-2">
+              <span class="metric-label">Average Readmission Risk</span>
+              <div class="metric-icon-box text-primary">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-number text-primary" id="audit-avg-risk">0.0%</div>
+            <div class="metric-subtext">Cohort mean across all evaluated inpatients</div>
+          </div>
+        </div>
+
+        <!-- Filter, Search & Sorting Controls Toolbar -->
+        <div class="card p-4 mb-6 audit-toolbar-card">
+          <div class="audit-filter-controls">
+            <div class="search-field-box">
+              <span class="search-field-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <input type="text" id="audit-search-input" class="form-control" placeholder="Search by Patient ID (e.g. 8222157)..." oninput="MediApp.filterAuditTable()">
+            </div>
+            <div class="filter-dropdown-box">
+              <select id="audit-status-filter" class="form-control" onchange="MediApp.filterAuditTable()">
+                <option value="all">All Risk Categories</option>
+                <option value="High">High Risk Only (&ge; 46%)</option>
+                <option value="Low">Low Risk Only (&lt; 46%)</option>
+              </select>
+            </div>
+            <div class="sort-dropdown-box">
+              <select id="audit-sort-order" class="form-control" onchange="MediApp.filterAuditTable()">
+                <option value="newest">Sort: Newest First</option>
+                <option value="oldest">Sort: Oldest First</option>
+                <option value="risk-desc">Sort: Highest Risk First</option>
+                <option value="risk-asc">Sort: Lowest Risk First</option>
+              </select>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="audit-reset-filter-btn" onclick="MediApp.resetAuditFilters()" title="Reset Filters">
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        <!-- Relational Table Card -->
+        <div class="card mb-6 audit-table-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Prediction History Audit Records</h3>
+              <p class="text-xs text-muted mt-1">Schema: <code>prediction_history (id, patient_id, searched_at, risk_percentage, risk_status)</code></p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="audit-table-count" class="badge badge-teal">Loading...</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table audit-table" id="audit-records-table">
+                <thead>
+                  <tr>
+                    <th>PREDICTION ID</th>
+                    <th>PATIENT ID</th>
+                    <th>RISK PERCENTAGE</th>
+                    <th>RISK STATUS</th>
+                    <th>TIMESTAMP (IST)</th>
+                    <th>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-table-body">
+                  <tr>
+                    <td colspan="6" class="text-center py-8 text-muted">
+                      Connecting to SQLite database (hospital_readmission.db)...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Pagination Bar -->
+            <div class="audit-pagination-bar flex items-center justify-between p-4 border-top" id="audit-pagination-bar">
+              <div class="text-xs text-muted" id="audit-pagination-info">
+                Showing records
+              </div>
+              <div class="pagination-buttons flex items-center gap-2" id="audit-pagination-btns">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Database Technical Specifications Card -->
+        <div class="card p-4 mb-6 db-specs-card">
+          <div class="flex items-center justify-between mb-3 border-bottom pb-2">
+            <h4 class="text-sm font-bold text-main flex items-center gap-2">
+              <span class="text-teal">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+              </span>
+              Relational Database Architecture Specifications
+            </h4>
+            <span class="badge badge-low-subtle text-xs">ACID Compliant</span>
+          </div>
+          <div class="db-specs-grid">
+            <div class="spec-item">
+              <span class="spec-label">Database Engine:</span>
+              <strong class="spec-value">SQLite 3 (Built-in Python <code>sqlite3</code>)</strong>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Database File:</span>
+              <strong class="spec-value"><code>database/hospital_readmission.db</code></strong>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Table Name:</span>
+              <strong class="spec-value"><code>prediction_history</code></strong>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Storage Architecture:</span>
+              <strong class="spec-value">Relational Database (Zero-Config Embedded)</strong>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Active Decision Threshold:</span>
+              <strong class="spec-value text-teal">0.46 (46.0% F2-Optimized)</strong>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Verified Production Model:</span>
+              <strong class="spec-value text-primary" id="audit-spec-model-name">Loading model...</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Healthcare Notice -->
+        <div class="healthcare-audit-notice text-center p-3 text-xs text-muted mb-4">
+          <strong>Clinical Decision Support Notice:</strong> Predictions are intended to assist healthcare professionals and must be evaluated alongside clinical judgment and comprehensive patient assessment.
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       APPLICATION FOOTER
+       ======================================================================== -->
+  <footer class="app-footer">
+    <div class="container footer-inner">
+      <div class="footer-disclaimer">
+        <strong>Healthcare Notice &bull; Clinical Decision Support Only:</strong>
+        This tool assists healthcare professionals in evaluating 30-day hospital readmission risk. All predictions must be evaluated alongside clinical judgment and patient assessment.
+        <div class="footer-subtle-note mt-1">
+          Decision threshold: 0.46 (46.0%) &bull; <span id="footer-model-name">Model: Random Forest Classifier (Ensemble Pipeline)</span> &bull; Relational Storage: SQLite 3.x
+        </div>
+      </div>
+      <div class="footer-copy text-right">
+        <span>&copy; MediPredict System &bull; Hospital Readmission Risk Evaluation</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
